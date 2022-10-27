@@ -1,9 +1,11 @@
 package master
 
 import (
-	"time"
-
+	"Ditributed-Crontab/common"
+	"context"
+	"encoding/json"
 	"github.com/coreos/etcd/clientv3"
+	"time"
 )
 
 // 任务管理器
@@ -18,6 +20,7 @@ var (
 	G_jobMgr *JobMgr
 )
 
+//初始化任务管理器
 func InitJobMgr() (err error) {
 	var (
 		config clientv3.Config
@@ -45,6 +48,37 @@ func InitJobMgr() (err error) {
 		client: client,
 		kv:     kv,
 		lease:  lease,
+	}
+	return
+}
+
+// 保存任务
+func (jobMgr *JobMgr) SaveJob(job *common.Job) (oldJob *common.Job, err error) {
+	// 把任务保存到/cron/jobs/任务名  -> json
+	var (
+		jobKey    string
+		jobValue  []byte
+		putResp   *clientv3.PutResponse
+		oldJobObj common.Job
+	)
+	// etcd的保存key
+	jobKey = common.JOB_SAVE_DIR + job.Name
+	// 任务信息json
+	if jobValue, err = json.Marshal(job); err != nil {
+		return
+	}
+	// 保存到etcd
+	if putResp, err = jobMgr.kv.Put(context.TODO(), jobKey, string(jobValue), clientv3.WithPrevKV()); err != nil {
+		return
+	}
+	// 如果是更新, 那么返回旧值
+	if putResp.PrevKv != nil {
+		// 对旧值做一个反序列化
+		if err = json.Unmarshal(putResp.PrevKv.Value, &oldJobObj); err != nil {
+			err = nil
+			return
+		}
+		oldJob = &oldJobObj
 	}
 	return
 }
