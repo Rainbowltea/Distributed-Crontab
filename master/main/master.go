@@ -4,6 +4,7 @@ import (
 	"Ditributed-Crontab/master"
 	"flag"
 	"fmt"
+	"time"
 )
 
 var (
@@ -34,6 +35,11 @@ func main() {
 	if err = master.InitApiServer(); err != nil {
 		goto ERR
 	}
+	// 正常退出
+	for {
+		time.Sleep(1 * time.Second)
+	}
+
 ERR:
 	fmt.Println(err)
 }
