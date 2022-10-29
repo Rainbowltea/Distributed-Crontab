@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Ditributed-Crontab/worker"
+	"Distributed-Crontab/worker"
 	"flag"
 	"fmt"
 	"runtime"
