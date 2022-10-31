@@ -39,6 +39,15 @@ type JobSchedulePlan struct {
 	NextTime time.Time            //下次调度的时间
 }
 
+// 任务执行结果
+type JobExecuteResult struct {
+	ExecuteInfo *JobExecuteInfo // 执行状态
+	Output      []byte          // 脚本输出
+	Err         error           // 脚本错误原因
+	StartTime   time.Time       // 启动时间
+	EndTime     time.Time       // 结束时间
+}
+
 // 变化事件
 type JobEvent struct {
 	EventType int //  SAVE, DELETE
