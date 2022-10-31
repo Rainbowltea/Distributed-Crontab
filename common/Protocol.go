@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -20,6 +21,15 @@ type Response struct {
 	Errno int         `json:"errno"`
 	Msg   string      `json:"msg"`
 	Data  interface{} `json:"data"`
+}
+
+// 任务执行状态
+type JobExecuteInfo struct {
+	Job        *Job               // 任务信息
+	PlanTime   time.Time          // 理论上的调度时间
+	RealTime   time.Time          // 实际的调度时间
+	CancelCtx  context.Context    // 任务command的context
+	CancelFunc context.CancelFunc //  用于取消command执行的cancel函数
 }
 
 //任务调度计划
@@ -105,4 +115,13 @@ func BuildJobSchedulePlan(job *Job) (jobSchedulePlan *JobSchedulePlan, err error
 	}
 	return
 
+}
+
+//构造执行状态信息
+func BUildExecuteInfo(jobSchedulePlan *JobSchedulePlan) (jobExecuteInfo *JobExecuteInfo) {
+	jobExecuteInfo = &JobExecuteInfo{
+		Job:      jobSchedulePlan.Job,
+		PlanTime: jobSchedulePlan.NextTime, // 计算调度时间
+		RealTime: time.Now(),               // 真实调度时间
+	}
 }
