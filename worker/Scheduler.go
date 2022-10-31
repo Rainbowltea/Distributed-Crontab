@@ -11,6 +11,7 @@ type Scheduler struct {
 	jobEventChan      chan *common.JobEvent              //etcd任务事件队列
 	jobPlanTable      map[string]*common.JobSchedulePlan //任务调度计划表
 	jobExecutingTable map[string]*common.JobExecuteInfo  // 任务执行表
+	jobResultChan     chan *common.JobExecuteResult      //任务结果队列
 }
 
 var (
@@ -35,6 +36,12 @@ func (scheduler *Scheduler) handleJobEvent(jobEvent *common.JobEvent) {
 			delete(scheduler.jobPlanTable, jobEvent.Job.Name)
 		}
 	}
+}
+
+//处理任务结果
+func (scheduler *Scheduler) handleJobResult(result *common.JobExecuteResult) {
+	//删除执行状态
+	delete(scheduler.jobExecutingTable, result.ExecuteInfo.Job.Name)
 }
 
 //重新计算任务调度状态
@@ -82,7 +89,7 @@ func (scheduler *Scheduler) TryStartJob(jobPlan *common.JobSchedulePlan) {
 		jobExecuting   bool //判断任务是否正在执行
 	)
 	//如果任务正在执行，跳过本次任务调度
-	if jobExecuteInfo, jojobExecuting = scheduler.jobExecutingTable[jobPlan.Job.Name]; jobExecuting {
+	if jobExecuteInfo, jobExecuting = scheduler.jobExecutingTable[jobPlan.Job.Name]; jobExecuting {
 		fmt.Println("尚未退出，跳过执行")
 		return
 	}
@@ -94,6 +101,7 @@ func (scheduler *Scheduler) TryStartJob(jobPlan *common.JobSchedulePlan) {
 
 	//执行任务
 	//TODO:并发执行任务
+	G_executor.ExecuteJob(jobExecuteInfo)
 }
 
 //调度协程
@@ -102,6 +110,7 @@ func (scheduler *Scheduler) scheduleLoop() {
 		jobEvent      *common.JobEvent
 		scheduleAfter time.Duration
 		scheduleTimer *time.Timer
+		jobResult     *common.JobExecuteResult
 	)
 	//初始化一次(1s)
 	scheduleAfter = scheduler.TrySchedule()
@@ -114,6 +123,8 @@ func (scheduler *Scheduler) scheduleLoop() {
 			//对内存中维护的任务列表做增删改查,和etcd中的任务保持一致
 			scheduler.handleJobEvent(jobEvent)
 		case <-scheduleTimer.C: //最近的任务到期了
+		case jobResult = <-scheduler.jobResultChan: //监听任务执行结果
+			scheduler.handleJobResult(jobResult)
 		}
 		//重新调度一次任务
 		scheduleAfter = scheduler.TrySchedule()
@@ -133,8 +144,14 @@ func InitScheduler() (err error) {
 		jobEventChan:      make(chan *common.JobEvent, 1000),
 		jobPlanTable:      make(map[string]*common.JobSchedulePlan),
 		jobExecutingTable: make(map[string]*common.JobExecuteInfo),
+		jobResultChan:     make(chan *common.JobExecuteResult, 1000),
 	}
 	//启动调度协程
 	go G_scheduler.scheduleLoop()
 	return
+}
+
+//回传任务执行结果
+func (scheduler *Scheduler) PushJobResult(jobResult *common.JobExecuteResult) {
+	scheduler.jobResultChan <- jobResult
 }
