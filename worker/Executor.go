@@ -2,7 +2,7 @@ package worker
 
 import (
 	"Distributed-Crontab/common"
-	"context"
+	_ "context"
 	"math/rand"
 	"os/exec"
 	"time"
@@ -40,7 +40,7 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 
 		//上锁
 		//随机睡眠(0~1s)
-		//
+		//解决锁倾斜问题
 		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
 		err = jobLock.TryLock()
 		defer jobLock.Unlock()
@@ -53,7 +53,7 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			result.StartTime = time.Now()
 
 			//执行shell命令
-			cmd = exec.CommandContext(context.TODO(), "bin/bash", "-c", info.Job.Command)
+			cmd = exec.CommandContext(info.CancelCtx, "bin/bash", "-c", info.Job.Command) //Linux系统中，在windows下要改成"c:\\cygwin64\\bin\\bash.exe"
 
 			//执行并捕获输出
 			output, err = cmd.CombinedOutput()
