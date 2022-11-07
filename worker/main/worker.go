@@ -56,6 +56,10 @@ func main() {
 		goto ERR
 	}
 
+	//启动日志收集协程
+	if err = worker.InitLogSink(); err != nil {
+		goto ERR
+	}
 	// 正常退出
 	for {
 		time.Sleep(1 * time.Second)
