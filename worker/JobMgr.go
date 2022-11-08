@@ -111,6 +111,7 @@ func (jobMgr *JobMgr) watchJobs() (err error) {
 				case mvccpb.DELETE:
 					//提取任务名
 					jobName = common.ExtractJobName(string(watchEvent.Kv.Key))
+					job = &common.Job{Name: jobName}
 					//构建一个删除Event
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
 					//推送一个删除事件给scheduler

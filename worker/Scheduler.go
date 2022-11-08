@@ -70,7 +70,8 @@ func (scheduler *Scheduler) handleJobResult(result *common.JobExecuteResult) {
 		} else {
 			jobLog.Err = ""
 		}
-		// TODO:传入mongodb中
+		// 传入mongodb中
+		G_logSink.Append(jobLog)
 	}
 
 	// fmt.Println("任务执行完成:", result.ExecuteInfo.Job.Name, string(result.Output), result.Err)
