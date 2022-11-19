@@ -60,6 +60,12 @@ func main() {
 	if err = worker.InitLogSink(); err != nil {
 		goto ERR
 	}
+
+	// 服务注册
+	if err = worker.InitRegister(); err != nil {
+		goto ERR
+	}
+
 	// 正常退出
 	for {
 		time.Sleep(1 * time.Second)
