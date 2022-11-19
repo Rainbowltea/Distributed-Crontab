@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Ditributed-Crontab/master"
+	"Distributed-Crontab/master"
 	"flag"
 	"fmt"
 	"time"
