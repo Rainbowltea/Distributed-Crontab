@@ -4,7 +4,7 @@ import (
 	"Distributed-Crontab/common"
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
+	_ "go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -37,11 +37,12 @@ func InitLogMgr() (err error) {
 	}
 	return
 }
+
 func (logMgr *LogMgr) ListLog(name string, skip int, limit int) (logArr []*common.JobLog, err error) {
 	var (
 		filter  *common.JobLogFilter
 		logSort *common.SortLogByStartTime
-		cursor  mongo.Cursor
+		cursor  *mongo.Cursor
 		jobLog  *common.JobLog
 	)
 	// len(logArr)
@@ -56,7 +57,7 @@ func (logMgr *LogMgr) ListLog(name string, skip int, limit int) (logArr []*commo
 	opt.SetLimit(int64(limit))
 	// 查询
 	//TODO:根据最新官方文档进行查询
-	if cursor, err = logMgr.logCollection.Find(context.TODO(), bson.D{{"name", "zhang3"}}); err != nil {
+	if cursor, err = logMgr.logCollection.Find(context.TODO(), filter); err != nil {
 		return
 	}
 	// 延迟释放游标
