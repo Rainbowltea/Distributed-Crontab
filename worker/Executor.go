@@ -1,9 +1,9 @@
 package worker
 
 import (
-	"Distributed-Crontab/common"
+	"Distributed-Crontab/pkg"
+	p1 "Distributed-Crontab/pkg/balance"
 	_ "context"
-	"math/rand"
 	"os/exec"
 	"time"
 )
@@ -17,17 +17,17 @@ var (
 )
 
 //执行一个任务
-func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
+func (executor *Executor) ExecuteJob(info *pkg.JobExecuteInfo) {
 	go func() {
 		var (
 			cmd     *exec.Cmd
 			err     error
 			output  []byte
-			result  *common.JobExecuteResult
+			result  *pkg.JobExecuteResult
 			jobLock *JobLock
 		)
 		//任务结果
-		result = &common.JobExecuteResult{
+		result = &pkg.JobExecuteResult{
 			ExecuteInfo: info,
 			Output:      make([]byte, 0),
 		}
@@ -41,7 +41,9 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 		//上锁
 		//随机睡眠(0~1s)
 		//解决锁倾斜问题
-		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+		//添加权重法计算节点CPU、内存使用情况来决定自身休眠多少秒
+		n := p1.GetNodeUsage()
+		time.Sleep(time.Duration(n) * time.Millisecond)
 		err = jobLock.TryLock()
 		defer jobLock.Unlock()
 
@@ -56,6 +58,8 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			cmd = exec.CommandContext(info.CancelCtx, "bin/bash", "-c", info.Job.Command) //Linux系统中，在windows下要改成"c:\\cygwin64\\bin\\bash.exe"
 
 			//执行并捕获输出
+			//疑问点：
+			//代码在61行等待命令执行完时宕机，
 			output, err = cmd.CombinedOutput()
 
 			//记录任务结束时间
@@ -63,7 +67,7 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			result.Output = output
 			result.Err = err
 		}
-		//把任务执行后，把执行的结果返回给scheduler,Scheduler会从executingTable中删除掉执行记录
+		//任务执行后，把执行的结果返回给scheduler,Scheduler会从executingTable中删除掉执行记录
 		G_scheduler.PushJobResult(result)
 	}()
 }
