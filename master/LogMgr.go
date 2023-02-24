@@ -1,7 +1,7 @@
 package master
 
 import (
-	"Distributed-Crontab/common"
+	"Distributed-Crontab/pkg"
 	"context"
 
 	_ "go.mongodb.org/mongo-driver/bson"
@@ -38,19 +38,19 @@ func InitLogMgr() (err error) {
 	return
 }
 
-func (logMgr *LogMgr) ListLog(name string, skip int, limit int) (logArr []*common.JobLog, err error) {
+func (logMgr *LogMgr) ListLog(name string, skip int, limit int) (logArr []*pkg.JobLog, err error) {
 	var (
-		filter  *common.JobLogFilter
-		logSort *common.SortLogByStartTime
+		filter  *pkg.JobLogFilter
+		logSort *pkg.SortLogByStartTime
 		cursor  *mongo.Cursor
-		jobLog  *common.JobLog
+		jobLog  *pkg.JobLog
 	)
 	// len(logArr)
-	logArr = make([]*common.JobLog, 0)
+	logArr = make([]*pkg.JobLog, 0)
 	// 过滤条件
-	filter = &common.JobLogFilter{JobName: name}
+	filter = &pkg.JobLogFilter{JobName: name}
 	// 按照任务开始时间倒排
-	logSort = &common.SortLogByStartTime{SortOrder: -1}
+	logSort = &pkg.SortLogByStartTime{SortOrder: -1}
 	opt := options.Find()
 	opt.SetSort(logSort)
 	opt.SetSkip(int64(skip))
@@ -64,7 +64,7 @@ func (logMgr *LogMgr) ListLog(name string, skip int, limit int) (logArr []*commo
 	defer cursor.Close(context.TODO())
 
 	for cursor.Next(context.TODO()) {
-		jobLog = &common.JobLog{}
+		jobLog = &pkg.JobLog{}
 
 		// 反序列化BSON
 		if err = cursor.Decode(jobLog); err != nil {

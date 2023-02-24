@@ -1,11 +1,12 @@
 package master
 
 import (
-	"Distributed-Crontab/common"
+	"Distributed-Crontab/pkg"
 	"context"
+	"time"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"time"
 )
 
 // /cron/workers/
@@ -31,14 +32,14 @@ func (workerMgr *WorkerMgr) ListWorkers() (workerArr []string, err error) {
 	workerArr = make([]string, 0)
 
 	// 获取目录下所有Kv
-	if getResp, err = workerMgr.kv.Get(context.TODO(), common.JOB_WORKER_DIR, clientv3.WithPrefix()); err != nil {
+	if getResp, err = workerMgr.kv.Get(context.TODO(), pkg.JOB_WORKER_DIR, clientv3.WithPrefix()); err != nil {
 		return
 	}
 
 	// 解析每个节点的IP
 	for _, kv = range getResp.Kvs {
 		// kv.Key : /cron/workers/192.168.2.1
-		workerIP = common.ExtractWorkerIP(string(kv.Key))
+		workerIP = pkg.ExtractWorkerIP(string(kv.Key))
 		workerArr = append(workerArr, workerIP)
 	}
 	return

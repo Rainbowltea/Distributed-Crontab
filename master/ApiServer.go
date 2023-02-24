@@ -1,7 +1,7 @@
 package master
 
 import (
-	"Distributed-Crontab/common"
+	"Distributed-Crontab/pkg"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -71,8 +71,8 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err     error
 		postJob string
-		job     common.Job
-		oldJob  *common.Job
+		job     pkg.Job
+		oldJob  *pkg.Job
 		bytes   []byte
 	)
 	// 1, 解析POST表单
@@ -90,13 +90,13 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
-	if bytes, err = common.BuildResponse(0, "success", oldJob); err == nil {
+	if bytes, err = pkg.BuildResponse(0, "success", oldJob); err == nil {
 		resp.Write(bytes)
 	}
 	return
 ERR:
 	// 6, 返回异常应答
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+	if bytes, err = pkg.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 }
@@ -107,7 +107,7 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err    error // interface{}
 		name   string
-		oldJob *common.Job
+		oldJob *pkg.Job
 		bytes  []byte
 	)
 	// POST:   a=1&b=2&c=3
@@ -124,12 +124,12 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 正常应答
-	if bytes, err = common.BuildResponse(0, "success", oldJob); err == nil {
+	if bytes, err = pkg.BuildResponse(0, "success", oldJob); err == nil {
 		resp.Write(bytes)
 	}
 	return
 ERR:
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+	if bytes, err = pkg.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 }
@@ -137,7 +137,7 @@ ERR:
 // 列举所有crontab任务
 func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	var (
-		jobList []*common.Job
+		jobList []*pkg.Job
 		bytes   []byte
 		err     error
 	)
@@ -148,13 +148,13 @@ func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 正常应答
-	if bytes, err = common.BuildResponse(0, "success", jobList); err == nil {
+	if bytes, err = pkg.BuildResponse(0, "success", jobList); err == nil {
 		resp.Write(bytes)
 	}
 	return
 
 ERR:
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+	if bytes, err = pkg.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 }
@@ -182,13 +182,13 @@ func handleJobKill(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 正常应答
-	if bytes, err = common.BuildResponse(0, "success", nil); err == nil {
+	if bytes, err = pkg.BuildResponse(0, "success", nil); err == nil {
 		resp.Write(bytes)
 	}
 	return
 
 ERR:
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+	if bytes, err = pkg.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 }
@@ -202,7 +202,7 @@ func handleJobLog(resp http.ResponseWriter, req *http.Request) {
 		limitParam string // 返回多少条
 		skip       int
 		limit      int
-		logArr     []*common.JobLog
+		logArr     []*pkg.JobLog
 		bytes      []byte
 	)
 	// 解析GET参数
@@ -225,12 +225,12 @@ func handleJobLog(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 正常应答
-	if bytes, err = common.BuildResponse(0, "success", logArr); err == nil {
+	if bytes, err = pkg.BuildResponse(0, "success", logArr); err == nil {
 		resp.Write(bytes)
 	}
 	return
 ERR:
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+	if bytes, err = pkg.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 }

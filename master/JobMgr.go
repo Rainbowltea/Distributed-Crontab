@@ -1,11 +1,12 @@
 package master
 
 import (
-	"Distributed-Crontab/common"
+	"Distributed-Crontab/pkg"
 	"context"
 	"encoding/json"
-	"go.etcd.io/etcd/clientv3"
 	"time"
+
+	"go.etcd.io/etcd/clientv3"
 )
 
 // 任务管理器
@@ -53,16 +54,16 @@ func InitJobMgr() (err error) {
 }
 
 // 保存任务
-func (jobMgr *JobMgr) SaveJob(job *common.Job) (oldJob *common.Job, err error) {
+func (jobMgr *JobMgr) SaveJob(job *pkg.Job) (oldJob *pkg.Job, err error) {
 	// 把任务保存到/cron/jobs/任务名  -> json
 	var (
 		jobKey    string
 		jobValue  []byte
 		putResp   *clientv3.PutResponse
-		oldJobObj common.Job
+		oldJobObj pkg.Job
 	)
 	// etcd的保存key
-	jobKey = common.JOB_SAVE_DIR + job.Name
+	jobKey = pkg.JOB_SAVE_DIR + job.Name
 	// 任务信息json
 	if jobValue, err = json.Marshal(job); err != nil {
 		return
@@ -84,15 +85,15 @@ func (jobMgr *JobMgr) SaveJob(job *common.Job) (oldJob *common.Job, err error) {
 }
 
 // 删除任务
-func (jobMgr *JobMgr) DeleteJob(name string) (oldJob *common.Job, err error) {
+func (jobMgr *JobMgr) DeleteJob(name string) (oldJob *pkg.Job, err error) {
 	var (
 		jobKey    string
 		delResp   *clientv3.DeleteResponse
-		oldJobObj common.Job
+		oldJobObj pkg.Job
 	)
 
 	// etcd中保存任务的key
-	jobKey = common.JOB_SAVE_DIR + name
+	jobKey = pkg.JOB_SAVE_DIR + name
 
 	// 从etcd中删除它
 	if delResp, err = jobMgr.kv.Delete(context.TODO(), jobKey, clientv3.WithPrevKV()); err != nil {
@@ -113,15 +114,15 @@ func (jobMgr *JobMgr) DeleteJob(name string) (oldJob *common.Job, err error) {
 
 //TODO:考虑分页
 // 列举任务
-func (jobMgr *JobMgr) ListJobs() (jobList []*common.Job, err error) {
+func (jobMgr *JobMgr) ListJobs() (jobList []*pkg.Job, err error) {
 	var (
 		dirKey  string
 		getResp *clientv3.GetResponse
-		job     *common.Job
+		job     *pkg.Job
 	)
 
 	// 任务保存的目录
-	dirKey = common.JOB_SAVE_DIR
+	dirKey = pkg.JOB_SAVE_DIR
 
 	// 获取目录下所有任务信息
 	if getResp, err = jobMgr.kv.Get(context.TODO(), dirKey, clientv3.WithPrefix()); err != nil {
@@ -129,12 +130,12 @@ func (jobMgr *JobMgr) ListJobs() (jobList []*common.Job, err error) {
 	}
 
 	// 初始化数组空间
-	jobList = make([]*common.Job, 0)
+	jobList = make([]*pkg.Job, 0)
 	// len(jobList) == 0
 
 	// 遍历所有任务, 进行反序列化
 	for _, kvPair := range getResp.Kvs {
-		job = &common.Job{}
+		job = &pkg.Job{}
 		if err = json.Unmarshal(kvPair.Value, job); err != nil {
 			err = nil
 			continue
@@ -154,7 +155,7 @@ func (jobMgr *JobMgr) KillJob(name string) (err error) {
 	)
 
 	// 通知worker杀死对应任务
-	killerKey = common.JOB_KILLER_DIR + name
+	killerKey = pkg.JOB_KILLER_DIR + name
 
 	// 让worker监听到一次put操作, 创建一个租约让其稍后自动过期即可
 	if leaseGrantResp, err = jobMgr.lease.Grant(context.TODO(), 1); err != nil {
